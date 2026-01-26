@@ -1,11 +1,16 @@
 const API_URL = "https://dummyjson.com/products";
 
+const CART_STORAGE_KEY = "marketplace_cart";
+const PRODUCTS_STORAGE_KEY = "marketplace_products";
+
 // Estado de la aplicación
-let products_state = []; // array con los productos tal cual de la API
-let cart_state = []; // array de items del carrito
+let products_state = JSON.parse(localStorage.getItem(PRODUCTS_STORAGE_KEY)) || [];// array con los productos tal cual de la API
+let cart_state = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || []; // array de items del carrito
 let loading_products_state = false; // bool que indica si se estan cargando
 let error_state = null; // guarda info sobre posibles errores (null o string)
 let total_state = 0; // total del carrito de compras
+
+
 
 
 // Referencias al html
@@ -27,7 +32,13 @@ async function fetchProducts() {
         }
 
         const data = await response.json();
-        setProducts(data.products);
+        // Si no hay productos guardados, usar los de la API
+        if (products_state.length === 0) {
+            setProducts(data.products);
+            saveProductsToLocalStorage();
+        } else {
+            renderProducts();
+        }
 
     } catch (error) {
         setError('Error loading products: ' + error.message);
@@ -162,6 +173,8 @@ function renderCart() {
         });
         setCart([]);
         setTotal(0);
+        saveCartToLocalStorage();
+        saveProductsToLocalStorage();
         renderProducts();
     });
 
@@ -175,6 +188,8 @@ function renderCart() {
         alert(`Purchase completed. Total to pay: $${total_state}`);
         setCart([]);
         setTotal(0);
+        saveCartToLocalStorage();
+        saveProductsToLocalStorage();
         renderProducts();
     });
 }
@@ -196,6 +211,7 @@ function renderLoadingProducts() {
 // Setters
 function setProducts(newProducts) {
     products_state = newProducts;
+    saveProductsToLocalStorage();
     renderProducts();
 }
 function setLoadingProducts(isLoading) {
@@ -212,8 +228,17 @@ function setTotal(newTotal) {
 }
 function setCart(newCart) {
     cart_state = newCart;
+    saveCartToLocalStorage();
     renderCart();
 }
+function saveCartToLocalStorage() {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart_state));
+}
+function saveProductsToLocalStorage() {
+    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products_state));
+}
+
+
 
 
 // Logica del catalogo
@@ -228,6 +253,7 @@ function decreaseStockInCatalog(productId) {
         setError("This product is out of stock.");
     }
     updateProductStockInDOM(productId);
+    saveProductsToLocalStorage();
 }
 // Usar solo en el caso de decrementar cantidad en el carrito
 function increaseStockInCatalog(productId, quantityToAdd = 1) {
@@ -237,6 +263,7 @@ function increaseStockInCatalog(productId, quantityToAdd = 1) {
     } else {
             setError(`Product with ID[${productId}] not found in the catalog: cannot increase stock`);
     }
+    saveProductsToLocalStorage();
 }
 function findProductFromCatalogById(id) {
     return products_state.find((product) => product.id === id);
@@ -280,12 +307,14 @@ function addToCart(productId) {
 
     calculateTotal();
     renderCart();
+    saveCartToLocalStorage();
 }
 function removeFromCart(productId) {
     const productInCart = findProductFromCartById(productId);
     if (productInCart) {
         increaseStockInCatalog(productId, productInCart.quantity);
         cart_state = cart_state.filter((product) => product.id !== productId);
+        saveCartToLocalStorage();
         calculateTotal();
         renderCart();
     }
@@ -301,6 +330,7 @@ function increaseQuantityToCart(productId) {
     } else {
         setError("This product is out of stock.");
     }
+    saveCartToLocalStorage();
 }
 function decreaseQuantityToCart(productId) {
     const productInCart = findProductFromCartById(productId);
@@ -313,6 +343,7 @@ function decreaseQuantityToCart(productId) {
     if (productInCart && productInCart.quantity === 0) {
         removeFromCart(productId);
     }
+    saveCartToLocalStorage();
 }
 function findProductFromCartById(id) {
     return cart_state.find((product) => product.id === id);
