@@ -264,6 +264,7 @@ function increaseStockInCatalog(productId, quantityToAdd = 1) {
             setError(`Product with ID[${productId}] not found in the catalog: cannot increase stock`);
     }
     saveProductsToLocalStorage();
+    updateProductStockInDOM(productId);
 }
 function findProductFromCatalogById(id) {
     return products_state.find((product) => product.id === id);
