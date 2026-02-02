@@ -67,7 +67,7 @@ El diseño está implementado en styles.css utilizando:
 * Flexbox para layout
 * Variables CSS (:root) para manejo de colores
 * Separación visual clara entre catálogo y carrito
-* Diseño responsivo básico
+* Diseño responsivo
 * Posicionamiento sticky para el carrito
 
 El archivo maqueta.png sirve como referencia visual del diseño esperado.
