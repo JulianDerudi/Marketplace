@@ -62,6 +62,24 @@ function renderProducts() {
     `;
     
     for(let product of products_state){
+        const productInCart = findProductFromCartById(product.id);
+        let buttonHTML = '';
+        
+        if(productInCart && productInCart.quantity > 0) {
+            // Si está en el carrito, mostrar botones de + y -
+            buttonHTML = `
+                <div class="product-actions-container">
+                    <div class="btn-container">
+                        <button type="button" class='btn-increase-catalog' data-increase_id='${product.id}'>+</button>
+                        <span class='quantity'>${productInCart.quantity}</span>
+                        <button type="button" class='btn-decrease-catalog' data-decrease_id='${product.id}'>-</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Si no está en el carrito, mostrar botón "Add Cart"
+            buttonHTML = `<button type="button" class='btn-add-cart' data-add_id='${product.id}'>Add Cart</button>`;
+        }
         
         catalog_render_str += `
             <div class="product-card" id="${product.id}">
@@ -71,7 +89,7 @@ function renderProducts() {
                     <span>Price: $${product.price}</span>
                     <span>Available units: ${product.stock}</span>
                 </div>
-                <button type="button" class='btn-add-cart' data-add_id='${product.id}'>Add Cart</button>
+                ${buttonHTML}
             </div>
         `
     }
@@ -90,6 +108,24 @@ function renderProducts() {
         button.addEventListener('click', () => {
             const productId = parseInt(button.getAttribute('data-add_id'));
             addToCart(productId);
+        });
+    });
+
+    // Agregar event listeners a los botones "+" del catálogo
+    const increaseButtons = document.querySelectorAll('.btn-increase-catalog');
+    increaseButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const productId = parseInt(button.getAttribute('data-increase_id'));
+            increaseQuantityToCart(productId);
+        });
+    });
+
+    // Agregar event listeners a los botones "-" del catálogo
+    const decreaseButtons = document.querySelectorAll('.btn-decrease-catalog');
+    decreaseButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const productId = parseInt(button.getAttribute('data-decrease_id'));
+            decreaseQuantityToCart(productId);
         });
     });
 
@@ -308,6 +344,7 @@ function addToCart(productId) {
 
     calculateTotal();
     renderCart();
+    renderProducts();
     saveCartToLocalStorage();
 }
 function removeFromCart(productId) {
@@ -318,6 +355,7 @@ function removeFromCart(productId) {
         saveCartToLocalStorage();
         calculateTotal();
         renderCart();
+        renderProducts();
     }
 }
 function increaseQuantityToCart(productId) {
@@ -328,6 +366,7 @@ function increaseQuantityToCart(productId) {
         decreaseStockInCatalog(productId);
         calculateTotal();
         renderCart();
+        renderProducts();
     } else {
         setError("This product is out of stock.");
     }
@@ -340,6 +379,7 @@ function decreaseQuantityToCart(productId) {
         increaseStockInCatalog(productId);
         calculateTotal();
         renderCart();
+        renderProducts();
     }
     if (productInCart && productInCart.quantity === 0) {
         removeFromCart(productId);
